@@ -9,7 +9,10 @@ Tool for converting [Synthstrom Audible Deluge](https://synthstrom.com/product/d
 
 2. Install [pip](https://pip.pypa.io/en/stable/installing/).
 
-3. Install [rpp](https://pypi.org/project/rpp/).
+3. Install [rpp](https://pypi.org/project/rpp/):
+```
+pip install rpp
+```
 
 4. Run `del2rpp`:
 ```
