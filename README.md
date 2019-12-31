@@ -4,6 +4,8 @@ Tool for converting [Synthstrom Audible Deluge](https://synthstrom.com/product/d
 
 ![REAPER screenshot](example/screenshot.png)
 
+Currently, only songs written in the arranger mode on the Deluge are converted to REAPER projects.
+
 ## Usage
 1. Clone or download the repository.
 
