@@ -14,7 +14,9 @@ Tool for converting [Synthstrom Audible Deluge](https://synthstrom.com/product/d
 
 ### Colab
 
-Colab allows you to run del2rpp in your browser, without installing it locally. Follow the instructions in this Colab notebook: [del2rpp](https://colab.research.google.com/github/dcower/del2rpp/blob/master/del2rpp.ipynb)
+Colab allows you to run del2rpp in your browser, without installing it locally.
+
+Follow the instructions in this Colab notebook: [del2rpp](https://colab.research.google.com/github/dcower/del2rpp/blob/master/del2rpp.ipynb)
 
 ### Local
 1. Clone or download the repository.
