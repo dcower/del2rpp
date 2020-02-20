@@ -130,3 +130,7 @@ dmypy.json
 
 *.reapeaks
 .DS_Store
+
+# REAPER projects
+*.rpp
+*.rpp-bak
