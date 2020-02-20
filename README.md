@@ -1,4 +1,4 @@
-# del2rpp (Deluge to RPP)
+# del2rpp (Deluge to REAPER)
 
 Tool for converting [Synthstrom Audible Deluge](https://synthstrom.com/product/deluge/) song files (XML) to [REAPER](https://www.reaper.fm) project files (RPP).
 
@@ -11,6 +11,12 @@ Tool for converting [Synthstrom Audible Deluge](https://synthstrom.com/product/d
 - Clips from kits are converted to MIDI notes, with each increasing MIDI pitch representing a row in the kit. This means that you'll have to use a sampler plugin to get your kit sounds to play properly in REAPER.
 
 ## Usage
+
+### Colab
+
+Colab allows you to run del2rpp in your browser, without installing it locally. Follow the instructions in this Colab notebook: [del2rpp](https://colab.research.google.com/github/dcower/del2rpp/blob/master/del2rpp.ipynb)
+
+### Local
 1. Clone or download the repository.
 
 2. Install [pip](https://pip.pypa.io/en/stable/installing/).
