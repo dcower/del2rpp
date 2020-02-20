@@ -8,7 +8,10 @@ import xml.etree.ElementTree as ET
 
 import rpp
 
-import pydel
+try:
+  from . import pydel
+except:
+  import pydel
 
 
 def generate_guid():
@@ -117,13 +120,12 @@ def audio_clip_to_reaper_source(clip, path_prefix, tempo):
   # TODO. Hack to point to the right file (thanks to collect?).
   #file_path = "/Users/dcower/Downloads/bug1/Bug1/" + file_path[8:].replace("/", "_")
   file_path = os.path.join(path_prefix, file_path)
-  #file_path = "example/" + file_path
 
   reaper_source_wave = rpp.Element(
       tag="SOURCE",
       attrib=["WAVE"],
       children=[
-          ["FILE", os.path.abspath(file_path)],
+          ["FILE", file_path],
       ])
 
   # The length of the stored selected audio sample (the chunk between the start and end sample
@@ -285,13 +287,18 @@ def convert(args):
   project = pydel.Project.from_element(root)
 
   # Prefix for file paths -- corresponds to root dir on Deluge SD card.
-  path_prefix, songs = os.path.split(os.path.dirname(args.input_file.name))
+  input_dir = os.path.dirname(args.input_file.name)
+  output_dir = os.path.dirname(args.output_file.name)
+  # relpath doesn't handle empty input paths.
+  if input_dir == "":
+    input_dir = "./"
+  path_prefix, songs = os.path.split(os.path.relpath(input_dir, output_dir))
 
   if songs != "SONGS":
     print(
         "WARNING: Expected song to be in SONGS/ directory. Audio clip paths may be incorrect."
     )
-    # TODO: Support collect songs.
+  # TODO: Support collect songs.
 
   reaper_project = rpp.Element(
       tag="REAPER_PROJECT",
