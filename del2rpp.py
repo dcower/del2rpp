@@ -122,9 +122,7 @@ def audio_clip_to_reaper_source(clip, path_prefix, tempo):
   file_path = os.path.join(path_prefix, file_path)
 
   reaper_source_wave = rpp.Element(
-      tag="SOURCE",
-      attrib=["WAVE"],
-      children=[
+      tag="SOURCE", attrib=["WAVE"], children=[
           ["FILE", file_path],
       ])
 
@@ -177,11 +175,8 @@ class ReaperMidiPool(object):
     return
 
 
-# TODO: Make this not a global.
-midi_clip_idx_to_reaper_midi_pool = {}
-
-
-def midi_clip_to_reaper_source(clip, clip_idx, length):
+def midi_clip_to_reaper_source(clip, clip_idx, length,
+                               midi_clip_idx_to_reaper_midi_pool):
   midi_messages = convert_notes_to_midi(clip.channel, clip.notes, clip.length,
                                         length)
 
@@ -216,6 +211,7 @@ def midi_clip_to_reaper_source(clip, clip_idx, length):
 
 
 def project_to_reaper_tracks(project, path_prefix):
+  midi_clip_idx_to_reaper_midi_pool = {}
   reaper_tracks = []
 
   # Deluge instruments/tracks are stored bottom-to-top.
@@ -245,9 +241,9 @@ def project_to_reaper_tracks(project, path_prefix):
         reaper_source, reaper_item_additional_children = audio_clip_to_reaper_source(
             clip, path_prefix, project.tempo)
       elif clip.has_midi():  # MIDI, synths, and kits.
-        #assert(midi_channel.channel == clip.midi_channel)
-        reaper_source = midi_clip_to_reaper_source(clip, clip_instance.clip_idx,
-                                                   clip_instance.length)
+        reaper_source = midi_clip_to_reaper_source(
+            clip, clip_instance.clip_idx, clip_instance.length,
+            midi_clip_idx_to_reaper_midi_pool)
       else:
         print("WARNING: Clip has neither audio nor MIDI")
         continue
@@ -271,10 +267,10 @@ def project_to_reaper_tracks(project, path_prefix):
 def convert(args):
   print("Converting {}".format(args.input_file.name))
 
-  try:
-    tree = ET.parse(args.input_file)
-    root = tree.getroot()
+  tree = ET.parse(args.input_file)
+  root = tree.getroot()
 
+  try:
     if root.tag != "song":
       print("ERROR: Root tag is not 'song'.")
       raise Error()
@@ -314,6 +310,9 @@ def convert(args):
   # TODO: Add markers + unused clips.
 
   rpp.dump(reaper_project, args.output_file)
+
+  args.input_file.close()
+  args.output_file.close()
 
 
 def main():
