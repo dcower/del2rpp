@@ -110,10 +110,10 @@ class InstrumentClip(Clip):
           channel=e.get_attrib("midiChannel", int, 0),
           preset_name=e.get_attrib("instrumentPresetName", str, ""),
           preset_slot=e.get_any_attrib([
-            "midiChannel",
-            "instrumentPresetSlot",
-            "cvChannel",
-            ], int, -1),
+              "midiChannel",
+              "instrumentPresetSlot",
+              "cvChannel",
+          ], int, -1),
           suffix=suffix_to_char(
               e.get_any_attrib([
                   "midiChannelSuffix",

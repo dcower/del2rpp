@@ -68,7 +68,7 @@ class ElementGetter(object):
       v = default
     else:
       raise KeyError("{} not found in attrib: {}".format(
-        name, self.element.attrib))
+          name, self.element.attrib))
 
     if converter is not None:
       return converter(v)
