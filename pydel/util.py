@@ -50,8 +50,8 @@ class ElementGetter(object):
         return self.get_attrib(name, converter, default)
 
     if default is None:
-      raise KeyError("None of {} found in {}'s attrib".format(
-          names, self.element.tag))
+      raise KeyError("None of {} found in {}'s attrib: {}".format(
+          names, self.element.tag, self.element.attrib))
 
     if converter is not None:
       return converter(default)
@@ -67,7 +67,8 @@ class ElementGetter(object):
     elif default is not None:
       v = default
     else:
-      raise KeyError("{} not found in attrib".format(name))
+      raise KeyError("{} not found in attrib: {}".format(
+        name, self.element.attrib))
 
     if converter is not None:
       return converter(v)
