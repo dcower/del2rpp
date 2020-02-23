@@ -76,6 +76,7 @@ class AudioClip(Clip):
 @attr.s
 class InstrumentClip(Clip):
   channel = attr.ib()
+  preset_name = attr.ib()
   # Also known as: MIDI channel, instrument preset slot, CV channel.
   preset_slot = attr.ib()
   suffix = attr.ib()
@@ -107,12 +108,17 @@ class InstrumentClip(Clip):
         ]) as e:
       instrument_clip = InstrumentClip(
           channel=e.get_attrib("midiChannel", int, 0),
-          preset_slot=e.get_any_attrib(
-              ["midiChannel", "instrumentPresetSlot", "cvChannel"], int),
+          preset_name=e.get_attrib("instrumentPresetName", str, ""),
+          preset_slot=e.get_any_attrib([
+            "midiChannel",
+            "instrumentPresetSlot",
+            "cvChannel",
+            ], int, -1),
           suffix=suffix_to_char(
               e.get_any_attrib([
-                  "midiChannelSuffix", "instrumentPresetSubSlot",
-                  "cvChannelSuffix"
+                  "midiChannelSuffix",
+                  "instrumentPresetSubSlot",
+                  "cvChannelSuffix",
               ], int, -1)),
           length=e.get_attrib("length", int),
           colour_offset=e.get_attrib("colourOffset", int, 0),

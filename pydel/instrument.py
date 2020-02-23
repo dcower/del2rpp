@@ -126,16 +126,21 @@ class CvChannel(Instrument):
 
 @attr.s
 class Sound(Instrument):
+  preset_name = attr.ib()
   preset_slot = attr.ib()
   suffix = attr.ib()
 
   def pretty_name(self):
+    if self.preset_name:
+      return self.preset_name
+
     return "Synth {}{}".format(self.preset_slot, self.suffix)
 
   @classmethod
   def from_element(cls, element):
     with ElementGetter(element, unused_attribs=UNUSED_ATTRIBS) as e:
       return Sound(
+          preset_name=e.get_attrib("presetName", str, ""),
           preset_slot=e.get_attrib("presetSlot", int, 0),
           suffix=suffix_to_char(e.get_attrib("presetSubSlot", int, -1)),
           muted=bool(e.get_attrib("isMutedInArrangement", int, 0)),
@@ -145,16 +150,21 @@ class Sound(Instrument):
 
 @attr.s
 class Kit(Instrument):
+  preset_name = attr.ib()
   preset_slot = attr.ib()
   suffix = attr.ib()
 
   def pretty_name(self):
+    if self.preset_name:
+      return self.preset_name
+
     return "Kit {}{}".format(self.preset_slot, self.suffix)
 
   @classmethod
   def from_element(cls, element):
     with ElementGetter(element, unused_attribs=UNUSED_ATTRIBS) as e:
       return Kit(
+          preset_name=e.get_attrib("presetName", str, ""),
           preset_slot=e.get_attrib("presetSlot", int, 0),
           suffix=suffix_to_char(e.get_attrib("presetSubSlot", int, -1)),
           muted=bool(e.get_attrib("isMutedInArrangement", int, 0)),
