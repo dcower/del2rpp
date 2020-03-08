@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 
 import attr
 
+from .oscillator import Oscillator
 from .util import ElementGetter, suffix_to_char
 
 UNUSED_ATTRIBS = [
@@ -33,8 +34,8 @@ class ClipInstance(object):
   # Index into the list of clips.
   clip_idx = attr.ib()
 
-  @classmethod
-  def from_hex(cls, data):
+  @staticmethod
+  def from_hex(data):
     assert len(data) == 24
 
     return ClipInstance(
@@ -54,8 +55,8 @@ class Instrument(object):
   def pretty_name(self):
     raise NotImplementedError
 
-  @classmethod
-  def _parse_clip_instances(cls, clip_instances_data):
+  @staticmethod
+  def _parse_clip_instances(clip_instances_data):
     clip_instances = []
 
     # Remove 0x prefix.
@@ -126,47 +127,78 @@ class CvChannel(Instrument):
 
 @attr.s
 class Sound(Instrument):
-  preset_name = attr.ib()
+  UNUSED_CHILDREN = [
+      "lfo1", "lfo2", "unison", "compressor", "arpeggiator", "modKnobs"
+  ]
+
+  name = attr.ib()
   preset_slot = attr.ib()
   suffix = attr.ib()
+  oscillators = attr.ib(factory=list)
 
   def pretty_name(self):
-    if self.preset_name:
-      return self.preset_name
+    if self.name:
+      return self.name
 
     return "Synth {}{}".format(self.preset_slot, self.suffix)
 
   @classmethod
   def from_element(cls, element):
-    with ElementGetter(element, unused_attribs=UNUSED_ATTRIBS) as e:
-      return Sound(
-          preset_name=e.get_attrib("presetName", str, ""),
+    with ElementGetter(
+        element,
+        unused_attribs=UNUSED_ATTRIBS,
+        unused_children=Sound.UNUSED_CHILDREN) as e:
+      sound = Sound(
+          name=e.get_any_attrib(["presetName", "name"], str, ""),
           preset_slot=e.get_attrib("presetSlot", int, 0),
           suffix=suffix_to_char(e.get_attrib("presetSubSlot", int, -1)),
           muted=bool(e.get_attrib("isMutedInArrangement", int, 0)),
           clip_instances=Instrument._parse_clip_instances(
-              e.get_attrib("clipInstances", str, "")))
+              e.get_attrib("clipInstances", str, "")),
+          oscillators=e.get_any_children({
+              "osc1": Oscillator.from_element,
+              "osc2": Oscillator.from_element
+          }))
+
+    return sound
 
 
 @attr.s
 class Kit(Instrument):
-  preset_name = attr.ib()
+  UNUSED_CHILDREN = ["selectedDrumIndex"]
+
+  name = attr.ib()
   preset_slot = attr.ib()
   suffix = attr.ib()
+  sound_sources = attr.ib(factory=list)
 
   def pretty_name(self):
-    if self.preset_name:
-      return self.preset_name
+    if self.name:
+      return self.name
 
     return "Kit {}{}".format(self.preset_slot, self.suffix)
 
   @classmethod
   def from_element(cls, element):
     with ElementGetter(element, unused_attribs=UNUSED_ATTRIBS) as e:
-      return Kit(
-          preset_name=e.get_attrib("presetName", str, ""),
+      kit = Kit(
+          name=e.get_attrib("presetName", str, ""),
           preset_slot=e.get_attrib("presetSlot", int, 0),
           suffix=suffix_to_char(e.get_attrib("presetSubSlot", int, -1)),
           muted=bool(e.get_attrib("isMutedInArrangement", int, 0)),
           clip_instances=Instrument._parse_clip_instances(
-              e.get_attrib("clipInstances", str, "")))
+              e.get_attrib("clipInstances", str, "")),
+          sound_sources=e.get_child("soundSources", Kit._parse_sound_sources,
+                                    []))
+
+    return kit
+
+  @staticmethod
+  def _parse_sound_sources(element):
+    sound_sources = []
+    for child in element:
+      if child.tag == "sound":
+        sound_sources.append(Sound.from_element(child))
+      else:
+        print("Unsupported child tag in soundSources: {}".format(child.tag))
+    return sound_sources

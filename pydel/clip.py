@@ -80,7 +80,7 @@ class InstrumentClip(Clip):
   # Also known as: MIDI channel, instrument preset slot, CV channel.
   preset_slot = attr.ib()
   suffix = attr.ib()
-  notes = attr.ib(default=[])
+  notes = attr.ib(factory=list)
   section = attr.ib(default=-1)
   params = attr.ib(default=attr.Factory(Params))
 

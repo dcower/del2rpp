@@ -5,83 +5,59 @@ import attr
 
 from .clip import AudioClip, InstrumentClip
 from .instrument import AudioTrack, MidiChannel, CvChannel, Sound, Kit
-from .util import SAMPLE_RATE_HZ, PPQN, SECONDS_PER_MINUTE
+from .util import ElementGetter, SAMPLE_RATE_HZ, PPQN, SECONDS_PER_MINUTE
 
 
 @attr.s
 class Project(object):
   tempo = attr.ib()
-  instruments = attr.ib(default=[])
-  sections = attr.ib(default=[])
-  clips = attr.ib(default=[])
-  arrange_only_clips = attr.ib(default=[])
+  instruments = attr.ib(factory=list)
+  sections = attr.ib(factory=list)
+  clips = attr.ib(factory=list)
+  arrange_only_clips = attr.ib(factory=list)
 
   @classmethod
   def from_element(cls, element):
-    deluge_project = Project(
-        tempo=deluge_timer_to_tempo(
-            int(element.attrib["timePerTimerTick"]),
-            int(element.attrib["timerTickFraction"])))
-
-    for child in element:
-      if child.tag == "instruments":
-        deluge_project.instruments = Project._parse_instruments(child)
-      elif child.tag == "sections":
-        deluge_project.sections = Project._parse_sections()
-      elif child.tag == "sessionClips":
-        deluge_project.clips = Project._parse_clips(child)
-      elif child.tag == "arrangementOnlyTracks":
-        deluge_project.arrange_only_clips = Project._parse_clips(child)
-      elif child.tag in [
-          "modeNotes", "reverb", "delay", "compressor", "songParams"
-      ]:
-        # Ignore for now.
-        pass
-      else:
-        print("Unsupported song child: {}".format(child.tag))
+    with ElementGetter(element) as e:
+      deluge_project = Project(
+          tempo=deluge_timer_to_tempo(
+              e.get_attrib("timePerTimerTick", int),
+              e.get_attrib("timerTickFraction", int)),
+          instruments=e.get_child("instruments", Project._parse_instruments,
+                                  []),
+          sections=e.get_child("sections", Project._parse_sections, []),
+          clips=e.get_child("sessionClips", Project._parse_clips, []),
+          arrange_only_clips=e.get_child("arrangementOnlyTracks",
+                                         Project._parse_clips, []))
 
     return deluge_project
 
-  @classmethod
-  def _parse_instruments(cls, element):
-    instruments = []
+  @staticmethod
+  def _parse_instruments(element):
+    with ElementGetter(element) as e:
+      return e.get_any_children({
+          "audioTrack": AudioTrack.from_element,
+          "midiChannel": MidiChannel.from_element,
+          "cvChannel": CvChannel.from_element,
+          "sound": Sound.from_element,
+          "kit": Kit.from_element,
+      })
 
-    for child in element:
-      if child.tag == "audioTrack":
-        instruments.append(AudioTrack.from_element(child))
-      elif child.tag == "midiChannel":
-        instruments.append(MidiChannel.from_element(child))
-      elif child.tag == "cvChannel":
-        instruments.append(CvChannel.from_element(child))
-      elif child.tag == "sound":
-        instruments.append(Sound.from_element(child))
-      elif child.tag == "kit":
-        instruments.append(Kit.from_element(child))
-      else:
-        print("Unsupported instrument: {}".format(child.tag))
-
-    return instruments
-
-  @classmethod
-  def _parse_sections(cls):
-    # Ignore.
+  @staticmethod
+  def _parse_sections(element):
+    # Ignore for now.
     return []
 
-  @classmethod
-  def _parse_clips(cls, element):
-    clips = []
-
-    for child in element:
-      if child.tag == "audioClip":
-        clips.append(AudioClip.from_element(child))
-      elif child.tag == "instrumentClip":
-        clips.append(InstrumentClip.from_element(child))
-      else:
-        print("Unsupported clip type: {}".format(child.tag))
-        # Append an empty clip to keep the instance indices in order.
-        clips.append(None)
-
-    return clips
+  @staticmethod
+  def _parse_clips(element):
+    with ElementGetter(element) as e:
+      return e.get_any_children(
+          {
+              "audioClip": AudioClip.from_element,
+              "instrumentClip": InstrumentClip.from_element,
+          },
+          # Append an empty clip to keep the instance indices in order.
+          unknown_converter=lambda: None)
 
 
 def deluge_timer_to_tempo(time_per_timer_tick, timer_tick_fraction):

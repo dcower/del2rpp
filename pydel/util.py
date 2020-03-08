@@ -40,6 +40,25 @@ class ElementGetter(object):
   nag = attr.ib(default=True)
   _attribs_gotten = attr.ib(default=attr.Factory(set))
   _unused_attribs = attr.ib(default=attr.Factory(set), converter=set)
+  _children_gotten = attr.ib(default=attr.Factory(set))
+  _unused_children = attr.ib(default=attr.Factory(set), converter=set)
+
+  def __enter__(self):
+    self._attribs_gotten = set()
+    self._children_gotten = set()
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    for name in self.element.attrib:
+      if (name not in self._unused_attribs and
+          name not in self._attribs_gotten and self.nag):
+        print("Warning: Unused attrib on {}: {}".format(self.element.tag, name))
+
+    for child in self.element:
+      if (child.tag not in self._unused_children and
+          child.tag not in self._children_gotten and self.nag):
+        print("Warning: Unused child on {}: {}".format(self.element.tag,
+                                                       child.tag))
 
   def has_attrib(self, name):
     return name in self.element.attrib
@@ -59,8 +78,6 @@ class ElementGetter(object):
     return default
 
   def get_attrib(self, name, converter=None, default=None):
-    self._attribs_gotten.add(name)
-
     v = None
     if name in self.element.attrib:
       v = self.element.attrib.get(name)
@@ -70,15 +87,40 @@ class ElementGetter(object):
       raise KeyError("{} not found in attrib: {}".format(
           name, self.element.attrib))
 
+    self._attribs_gotten.add(name)
+
     if converter is not None:
       return converter(v)
     return v
 
-  def __enter__(self):
-    self._attribs_gotten = set()
-    return self
+  def get_child(self, name, converter=None, default=None):
+    c = None
+    for child in self.element:
+      if child.tag == name:
+        c = child
 
-  def __exit__(self, exc_type, exc_value, traceback):
-    for name in self.element.attrib:
-      if name not in self._unused_attribs and name not in self._attribs_gotten and self.nag:
-        print("Warning: Unused attrib on {}: {}".format(self.element.tag, name))
+    if c is None:
+      if default is not None:
+        c = default
+      else:
+        raise KeyError("{} child not found in {}".format(
+            name, self.element.tag))
+
+    self._children_gotten.add(name)
+
+    if converter is not None:
+      return converter(c)
+
+    return c
+
+  def get_any_children(self, name_to_converter, unknown_converter=None):
+    children = []
+
+    for child in self.element:
+      if child.tag in name_to_converter:
+        children.append(name_to_converter[child.tag](child))
+        self._children_gotten.add(child.tag)
+      elif unknown_converter is not None:
+        children.append(unknown_converter(child))
+
+    return children

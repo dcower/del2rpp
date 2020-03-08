@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import base64
+import binascii
+import del2rpp
 import os
+import struct
+import traceback
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -12,14 +17,6 @@ try:
   from . import pydel
 except:
   import pydel
-
-
-def generate_guid():
-  return "{" + str(uuid.uuid4()) + "}"
-
-
-def color_to_reaper(color):
-  return ((color.r << 16) | (color.g << 8) | color.b) | 0x1000000
 
 
 def convert_notes_to_midi(channel, notes, clip_length, instance_length):
@@ -87,7 +84,7 @@ def clip_instance_to_reaper_item(clip_instance,
   if additional_children is None:
     additional_children = []
 
-  color = color_to_reaper(pydel.section_to_color(clip.section))
+  color = del2rpp.util.color_to_reaper(pydel.section_to_color(clip.section))
   volume = clip.params.volume
   pan = clip.params.pan
 
@@ -102,9 +99,9 @@ def clip_instance_to_reaper_item(clip_instance,
           ["LENGTH", length_in_seconds],
           ["LOOP", 1],
           # Item GUID.
-          ["IGUID", generate_guid()],
+          ["IGUID", del2rpp.util.generate_guid()],
           # First take GUID.
-          ["GUID", generate_guid()],
+          ["GUID", del2rpp.util.generate_guid()],
           ["NAME", "Clip {}".format(pretty_clip_idx)],
           ["VOLPAN", volume, pan],
           ["COLOR", color, "B"],
@@ -195,8 +192,8 @@ def midi_clip_to_reaper_source(clip, clip_idx, length,
     midi_messages = []
   else:
     reaper_midi_pool = ReaperMidiPool()
-    reaper_midi_pool.guid = generate_guid()
-    reaper_midi_pool.pooledevts = generate_guid()
+    reaper_midi_pool.guid = del2rpp.util.generate_guid()
+    reaper_midi_pool.pooledevts = del2rpp.util.generate_guid()
     reaper_midi_pool.midi_messages = midi_messages
     midi_clip_idx_to_reaper_midi_pool[clip_idx] = reaper_midi_pool
 
@@ -216,7 +213,7 @@ def project_to_reaper_tracks(project, path_prefix):
 
   # Deluge instruments/tracks are stored bottom-to-top.
   for instrument in reversed(project.instruments):
-    guid = generate_guid()
+    guid = del2rpp.util.generate_guid()
 
     reaper_items = []
 
@@ -253,13 +250,18 @@ def project_to_reaper_tracks(project, path_prefix):
                                        reaper_source, project.tempo,
                                        reaper_item_additional_children))
 
+    fx_chain = []
+    if type(instrument) is pydel.instrument.Kit:
+      fx_chain = [del2rpp.kit.generate_kit_fx_chain(instrument, path_prefix)]
+      #reaper_tracks += generate_kit_bus_tracks(instrument, path_prefix)
+
     reaper_tracks.append(
         rpp.Element(
             tag="TRACK",
             attrib=[guid],
             children=[["NAME", instrument.pretty_name()], ["TRACKID", guid],
                       ["MUTESOLO", [int(instrument.muted), 0, 0]]] +
-            reaper_items))
+            reaper_items + fx_chain))
 
   return reaper_tracks
 
@@ -267,10 +269,10 @@ def project_to_reaper_tracks(project, path_prefix):
 def convert(args):
   print("Converting {}".format(args.input_file.name))
 
-  tree = ET.parse(args.input_file)
-  root = tree.getroot()
-
   try:
+    tree = ET.parse(args.input_file)
+    root = tree.getroot()
+
     if root.tag != "song":
       print("ERROR: Root tag is not 'song'.")
       raise Error()
@@ -278,6 +280,7 @@ def convert(args):
     print(
         "ERROR: Only songs from Deluge 3.x are supported. Try re-saving song using 3.x firmware."
     )
+    print(traceback.format_exc())
     return
 
   project = pydel.Project.from_element(root)
@@ -305,6 +308,7 @@ def convert(args):
           ["AUTOXFADE", "1"],
           ["TEMPO", project.tempo],
           ["PLAYRATE", 1, 0, 0.25, 4],
+          ["SAMPLERATE", pydel.util.SAMPLE_RATE_HZ, 1, 0],
       ] + project_to_reaper_tracks(project, path_prefix))
 
   # TODO: Add markers + unused clips.
