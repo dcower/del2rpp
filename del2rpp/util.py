@@ -19,4 +19,8 @@ def bytes_to_hex(b):
 
 
 def hex_to_base64(h):
-  return base64.b64encode(bytearray.fromhex(h)).decode("ascii")
+  # Final encode() is to fix an infinite recursion in RPP.
+  # RPP's encode_value function does not handle unicode type, which Python 2.x
+  # gives this string without the additional encode().
+  # TODO: Fix this properly.
+  return base64.b64encode(bytearray.fromhex(h)).decode("ascii").encode("ascii")

@@ -253,7 +253,6 @@ def project_to_reaper_tracks(project, path_prefix):
     fx_chain = []
     if type(instrument) is pydel.instrument.Kit:
       fx_chain = [del2rpp.kit.generate_kit_fx_chain(instrument, path_prefix)]
-      #reaper_tracks += generate_kit_bus_tracks(instrument, path_prefix)
 
     reaper_tracks.append(
         rpp.Element(

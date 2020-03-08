@@ -10,11 +10,11 @@ import rpp
 
 
 def generate_sampler_plugin_data(path, note_start, note_end):
+  path_hex = bytes_to_hex(path.encode("utf-8"))
   note_start_hex = bytes_to_hex(struct.pack("<d", note_start / 127.0))
   note_end_hex = bytes_to_hex(struct.pack("<d", note_end / 127.0))
-  data = bytes_to_hex(
-      path.encode("utf-8")
-  ) + "00000000000000f03f000000000000e03f000000000000f03f" + note_start_hex + note_end_hex + "9a9999999999b13fcdcccccccccceb3f00000000000000009a9999999999c93ffca9f1d24d62403ffca9f1d24d62403f000000000000000000000000000000000000000000000000000000000000f03f000000000000e03f010000000000000000000000000000000000f03f40000000555555555555c53fffffffff0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000000000000000000000000000000000000000cea421211a65903f000000000000f03ffca9f1d24d62303f0000000000000000"
+  data = "{path}00000000000000f03f000000000000e03f000000000000f03f{note_start}{note_end}9a9999999999b13fcdcccccccccceb3f00000000000000009a9999999999c93ffca9f1d24d62403ffca9f1d24d62403f000000000000000000000000000000000000000000000000000000000000f03f000000000000e03f010000000000000000000000000000000000f03f40000000555555555555c53fffffffff0000000000000000000000000000f03f000000000000f03f0000000000000000000000000000000000000000000000000000000000000000cea421211a65903f000000000000f03ffca9f1d24d62303f0000000000000000".format(
+  path=path_hex, note_start=note_start_hex, note_end=note_end_hex)
 
   return hex_to_base64(data), len(data) // 2
 
@@ -51,6 +51,9 @@ def generate_sampler_fx_chain(paths_and_notes):
 
 
 def generate_kit_fx_chain(kit, path_prefix):
+  """
+  Generates a REAPER FX chain for the given kit.
+  """
   paths_and_notes = []
   for note, sound in enumerate(kit.sound_sources):
     for osc in sound.oscillators:
@@ -73,6 +76,12 @@ def generate_kit_sound_track(paths_and_notes):
 
 
 def generate_kit_bus_tracks(kit, path_prefix):
+  """
+  Generates individual tracks for each sample in the given kit.
+  """
+
+  # TODO: Create the container (bus) track and set up routing.
+
   # Container track: ISBUS 1 1
   # Last contained track: ISBUS 2 -1
 
