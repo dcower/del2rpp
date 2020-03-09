@@ -23,9 +23,9 @@ Follow the instructions in this Colab notebook: [del2rpp](https://colab.research
 
 2. Install [pip](https://pip.pypa.io/en/stable/installing/).
 
-3. Install [rpp](https://pypi.org/project/rpp/):
+3. Install del2rpp's dependencies:
 ```
-pip install rpp
+python setup.py install
 ```
 
 4. Run `del2rpp`:
