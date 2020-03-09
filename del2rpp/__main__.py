@@ -4,19 +4,16 @@
 import argparse
 import base64
 import binascii
-import del2rpp
 import os
 import struct
 import traceback
 import uuid
 import xml.etree.ElementTree as ET
 
-import rpp
+from . import kit, util
 
-try:
-  from . import pydel
-except:
-  import pydel
+import pydel
+import rpp
 
 
 def convert_notes_to_midi(channel, notes, clip_length, instance_length):
@@ -84,7 +81,7 @@ def clip_instance_to_reaper_item(clip_instance,
   if additional_children is None:
     additional_children = []
 
-  color = del2rpp.util.color_to_reaper(pydel.section_to_color(clip.section))
+  color = util.color_to_reaper(pydel.section_to_color(clip.section))
   volume = clip.params.volume
   pan = clip.params.pan
 
@@ -99,9 +96,9 @@ def clip_instance_to_reaper_item(clip_instance,
           ["LENGTH", length_in_seconds],
           ["LOOP", 1],
           # Item GUID.
-          ["IGUID", del2rpp.util.generate_guid()],
+          ["IGUID", util.generate_guid()],
           # First take GUID.
-          ["GUID", del2rpp.util.generate_guid()],
+          ["GUID", util.generate_guid()],
           ["NAME", "Clip {}".format(pretty_clip_idx)],
           ["VOLPAN", volume, pan],
           ["COLOR", color, "B"],
@@ -192,8 +189,8 @@ def midi_clip_to_reaper_source(clip, clip_idx, length,
     midi_messages = []
   else:
     reaper_midi_pool = ReaperMidiPool()
-    reaper_midi_pool.guid = del2rpp.util.generate_guid()
-    reaper_midi_pool.pooledevts = del2rpp.util.generate_guid()
+    reaper_midi_pool.guid = util.generate_guid()
+    reaper_midi_pool.pooledevts = util.generate_guid()
     reaper_midi_pool.midi_messages = midi_messages
     midi_clip_idx_to_reaper_midi_pool[clip_idx] = reaper_midi_pool
 
@@ -213,7 +210,7 @@ def project_to_reaper_tracks(project, path_prefix):
 
   # Deluge instruments/tracks are stored bottom-to-top.
   for instrument in reversed(project.instruments):
-    guid = del2rpp.util.generate_guid()
+    guid = util.generate_guid()
 
     reaper_items = []
 
@@ -252,7 +249,7 @@ def project_to_reaper_tracks(project, path_prefix):
 
     fx_chain = []
     if type(instrument) is pydel.instrument.Kit:
-      fx_chain = [del2rpp.kit.generate_kit_fx_chain(instrument, path_prefix)]
+      fx_chain = [kit.generate_kit_fx_chain(instrument, path_prefix)]
 
     reaper_tracks.append(
         rpp.Element(

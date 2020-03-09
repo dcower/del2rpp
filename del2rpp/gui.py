@@ -13,7 +13,8 @@ except ImportError:
   import tkMessageBox as messagebox
   import ttk
 
-import del2rpp
+import __main__
+
 import os
 import traceback
 import types
@@ -104,7 +105,7 @@ class Application(tk.Frame):
       return
 
     try:
-      del2rpp.convert(self.args)
+      __main__.convert(self.args)
     except Exception as e:
       tb = traceback.format_exc()
       messagebox.showerror(

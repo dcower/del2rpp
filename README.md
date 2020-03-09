@@ -30,7 +30,7 @@ python setup.py install
 
 4. Run `del2rpp`:
 ```
-python del2rpp.py example/SONGS/Test.XML out.rpp
+python -m del2rpp example/SONGS/Test.XML out.rpp
 ```
 
 5. Open `out.rpp` with REAPER.
