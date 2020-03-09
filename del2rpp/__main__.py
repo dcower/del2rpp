@@ -12,7 +12,12 @@ import xml.etree.ElementTree as ET
 
 from . import kit, util
 
-import pydel
+try:
+  # Try local import first.
+  from pydel import pydel
+except:
+  import pydel
+
 import rpp
 
 
