@@ -1,0 +1,3 @@
+[submodule "pydel"]
+	path = pydel
+	url = https://github.com/dcower/pydel
